@@ -31,8 +31,21 @@ class FileLoader:
 
         return (min_x, max_x), (min_y, max_y)
 
+    def normalize_data(self, xy_coordinates):
+        minmax = self.get_min_max(xy_coordinates)
+        minmax_x = minmax[0]
+        minmax_y = minmax[1]
+        normalized_coordinates = []
+
+        for coordinate in xy_coordinates:
+            normalized_coordinate = ((coordinate[0] - minmax_x[0])/(minmax_x[1] - minmax_x[0]),
+                                     (coordinate[1] - minmax_y[0])/(minmax_y[1] - minmax_y[0]))
+            normalized_coordinates.append(normalized_coordinate)
+
+        return normalized_coordinates
+
     def scatter_plot(self, xy_coordinates, name):
-        transposed_array = xy_coordinates.T
+        transposed_array = np.asarray(xy_coordinates).T
         plt.plot(transposed_array[0], transposed_array[1])
         plt.title(name)
         plt.xlabel('x')
