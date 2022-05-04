@@ -46,14 +46,31 @@ class DataFilter:
 
         return x_cumulative / len(point_list), y_cumulative / len(point_list)
 
-    def remove_outliers(self, xy_coordinates):
-        for i in range(0, math.floor(len(xy_coordinates)/500)):
-            mean_point = self.mean_point(xy_coordinates[i*500:(i+1)*500])
-            for point in xy_coordinates[i*500:(i+1)*500]:
-                dist = self.euclidean_distance(point, mean_point)
-                if dist > self.outlier_dist:
-                    xy_coordinates.remove(point)
-        return xy_coordinates
+    def median_filter(self, xy_coordinates, sliding_window):
+        output_coordinates = []
+        for i in range(sliding_window, len(xy_coordinates) - sliding_window):
+            window = []
+            for j in range(0, sliding_window):
+                window.append(xy_coordinates[i+j-sliding_window])
+
+            avg_point = self.mean_point(window)
+            distances = []
+            for entry in window:
+                distances.append(self.euclidean_distance(entry, avg_point))
+
+            point_dist = list(zip(window, distances))
+            point_dist.sort(key=lambda tup: tup[1])
+            output = point_dist[int(np.floor(sliding_window/2))][0]
+
+            in_array = False
+            for coordinate in output_coordinates:
+                if coordinate[0] == output[0] and coordinate[1] == output[1]:
+                    in_array = True
+                    break
+            if not in_array:
+                output_coordinates.append(output)
+
+        return output_coordinates
 
 
     def plot_fixations(self):

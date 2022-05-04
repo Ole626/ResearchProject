@@ -46,7 +46,8 @@ class FileLoader:
 
     def scatter_plot(self, xy_coordinates, name):
         transposed_array = np.asarray(xy_coordinates).T
-        plt.plot(transposed_array[0], transposed_array[1])
+        plt.plot(transposed_array[0], transposed_array[1], linewidth=0.3, color='black', alpha=0.7)
+        plt.scatter(transposed_array[0], transposed_array[1], color='red', edgecolors='black', linewidths=1.0)
         plt.title(name)
         plt.xlabel('x')
         plt.ylabel('y')
