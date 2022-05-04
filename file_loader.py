@@ -46,10 +46,19 @@ class FileLoader:
 
     def scatter_plot(self, xy_coordinates, name):
         transposed_array = np.asarray(xy_coordinates).T
-        plt.plot(transposed_array[0], transposed_array[1], linewidth=0.3, color='black', alpha=0.7)
-        plt.scatter(transposed_array[0], transposed_array[1], color='red', edgecolors='black', linewidths=1.0)
+        plt.plot(transposed_array[0], transposed_array[1], linewidth=0.3, color='black', marker='o',
+                 markerfacecolor='red', markeredgecolor='black', markeredgewidth=1.2, markersize=4.0)
         plt.title(name)
         plt.xlabel('x')
         plt.ylabel('y')
         plt.show()
 
+    def position_over_time(self, xy_coordinates):
+        transposed_array = np.asarray(xy_coordinates).T
+        time = np.arange(len(xy_coordinates)) * 20
+        plt.plot(time, transposed_array[0], color='red', label='x')
+        plt.plot(time, transposed_array[1], color='blue', label='y')
+        plt.legend(loc='upper right')
+        plt.xlabel('Time (ms)')
+        plt.ylabel('Position')
+        plt.show()
