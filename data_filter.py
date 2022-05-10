@@ -6,15 +6,15 @@ import numpy as np
 
 
 class DataFilter:
-    def __init__(self, xy_coordinates):
+    def __init__(self, xy_coordinates, distance_array):
         self.fixations = None
         self.saccades = None
         self.xy_coordinates = xy_coordinates
+        self.distance_array = distance_array
         self.threshold = 0.001
         self.outlier_dist = 0.4
 
     def get_fixations(self, xy_coordinates, sliding_window, threshold, radius):
-        self.fixations = []
         difference_vector = np.zeros(len(xy_coordinates))
 
         # Get the difference vector for the mean of consecutive sliding windows
@@ -32,7 +32,7 @@ class DataFilter:
                                             math.pow((m_after[1] - m_before[1]), 2))
 
         peaks = np.zeros(len(xy_coordinates))
-
+        print("Difference vector done")
         # Get the peaks between averages and store them in a separate list
         for i in range(1, len(xy_coordinates)-2):
             if difference_vector[i] > difference_vector[i-1] and difference_vector[i] > difference_vector[i+1]:
@@ -53,15 +53,24 @@ class DataFilter:
         for i in range(0, len(peaks)-1):
             if peaks[i] >= threshold:
                 peak_indices.append(i)
-
+        print("Determined peak indices")
         shortest_distance = 0
+        while shortest_distance < radius:
+            fixations = []
+            for i in range(1, len(peak_indices)-1):
+                fixations.append(self.geometric_median(xy_coordinates[peak_indices[i-1]:peak_indices[i]]))
 
-        #while shortest_distance < radius:
-        self.fixations = []
-        for i in range(1, len(peak_indices)-1):
-            self.fixations.append(self.geometric_median(xy_coordinates[peak_indices[i-1]:peak_indices[i]]))
-        print(self.fixations)
-        return self.fixations
+            shortest_distance = sys.maxsize
+            index = 0
+            for i in range(1, len(fixations)-1):
+                distance = self.euclidean_distance(fixations[i], fixations[i-1])
+                if distance < shortest_distance:
+                    shortest_distance = distance
+                    index = i
+            if shortest_distance < radius:
+                del peak_indices[index]
+
+        return fixations
 
     def euclidean_distance(self, coordinate1, coordinate2):
         return math.sqrt(math.pow((coordinate1[0] - coordinate2[0]), 2)
@@ -77,14 +86,18 @@ class DataFilter:
 
         return x_cumulative / len(point_list), y_cumulative / len(point_list)
 
-    def median_filter(self, xy_coordinates, sliding_window):
+    def median_filter(self, sliding_window):
         output_coordinates = []
-        for i in range(sliding_window, len(xy_coordinates) - sliding_window):
+        counter = 0
+        for i in range(sliding_window, len(self.xy_coordinates) - sliding_window):
             window = []
+            if (i-sliding_window) % int(((len(self.xy_coordinates)-2*sliding_window)/100)) == 0:
+                counter = counter + 1
+                print(counter, "%")
             for j in range(0, sliding_window):
-                window.append(xy_coordinates[i+j-sliding_window])
+                window.append(i+j-sliding_window)
 
-            output = self.geometric_median(window)
+            output = self.xy_coordinates[self.geometric_median_with_distance_array(window, self.distance_array)]
 
             in_array = False
             for coordinate in output_coordinates:
@@ -93,7 +106,7 @@ class DataFilter:
                     break
             if not in_array:
                 output_coordinates.append(output)
-
+        print("Median filter done")
         return output_coordinates
 
     def geometric_median(self, xy_coordinates):
@@ -103,6 +116,8 @@ class DataFilter:
         for point in xy_coordinates:
             distance_sum = 0
             for comparison_point in xy_coordinates:
+                if distance_sum > shortest_distance:
+                    break
                 distance_sum = distance_sum + self.euclidean_distance(point, comparison_point)
 
             if distance_sum < shortest_distance:
@@ -110,6 +125,38 @@ class DataFilter:
                 median = point
 
         return median
+
+    def geometric_median_with_distance_array(self, indices, distance_array):
+        shortest_distance = sys.maxsize
+        median = []
+
+        for point in indices:
+            distance_sum = 0
+            for comparison_point in indices:
+                if distance_sum > shortest_distance:
+                    break
+                if point < comparison_point:
+                    distance_sum = distance_sum + distance_array[point][comparison_point]
+                else:
+                    distance_sum = distance_sum + distance_array[comparison_point][point]
+
+            if distance_sum < shortest_distance:
+                shortest_distance = distance_sum
+                median = point
+
+        return median
+
+    def calculate_all_distances(self, name):
+        result_array = np.ndarray(shape=(len(self.xy_coordinates), len(self.xy_coordinates)), dtype=float)
+        counter = 0
+        for i in range(0, len(self.xy_coordinates)):
+            if (i-1) % (len(self.xy_coordinates)/100) == 0:
+                counter = counter + 1
+                print(counter, "%")
+            for j in range(i+1, len(self.xy_coordinates)):
+                result_array[i][j] = self.euclidean_distance(self.xy_coordinates[i], self.xy_coordinates[j])
+        np.save('data\\' + name + '.npy', result_array)
+        return result_array
 
     def plot_fixations(self):
         rawdata = np.asarray(self.xy_coordinates)

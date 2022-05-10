@@ -4,19 +4,24 @@ import numpy as np
 import matplotlib.pyplot as plt
 
 
-desktop_activity_location = ".\\data\\DesktopActivity\\subject7.mat"
+desktop_activity_location = ".\\data\\DesktopActivity\\subject5.mat"
 
 if __name__ == '__main__':
+    name = 'readDataRaw'
     fl = FileLoader()
     data = fl.read_file(desktop_activity_location)
-    name = 'searchDataRaw'
-    data_raw = np.asarray(data[name][0:500])
-    df = DataFilter(data_raw)
-    median_point = df.geometric_median(data_raw)
-    filtered = np.asarray(df.median_filter(data_raw, 11))
-    fixations = np.asarray(df.get_fixations(filtered, 5, 0.01, 1))
-    plt.plot(filtered.T[0], filtered.T[1], color='blue')
-    plt.scatter(fixations.T[0], fixations.T[1], color='red')
+    distance_array = np.load('data\\' + name + '.npy')
+    data_raw = np.asarray(data[name])
+    #plt.plot(data_raw.T[0], data_raw.T[1])
+    #plt.show()
+    normalized = fl.normalize_data(data_raw)
+
+    df = DataFilter(normalized[0:5000], distance_array)
+    filtered = np.asarray(df.median_filter(90))
+
+    fixations = np.asarray(df.get_fixations(filtered, 4, 0.005, 0.001))
+    plt.plot(fixations.T[0], fixations.T[1], linewidth=0.6, color='black', marker='o',
+             markerfacecolor='red', markeredgecolor='black', markeredgewidth=1.5, markersize=4.5)
     plt.show()
     #fl.position_over_time(data_raw)
     #fl.position_over_time(filtered)
