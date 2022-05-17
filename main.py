@@ -3,28 +3,26 @@ from data_filter import DataFilter
 import numpy as np
 import matplotlib.pyplot as plt
 
-
-desktop_activity_location = ".\\data\\DesktopActivity\\subject5.mat"
+subject = "subject1"
+names = ['readDataRaw','writeDataRaw', 'watchDataRaw', 'playDataRaw', 'browseDataRaw']
+desktop_activity_location = ".\\data\\DesktopActivity\\" + subject + ".mat"
 
 if __name__ == '__main__':
-    name = 'readDataRaw'
     fl = FileLoader()
-    data = fl.read_file(desktop_activity_location)
-    distance_array = np.load('data\\' + name + '.npy')
-    data_raw = np.asarray(data[name])
-    #plt.plot(data_raw.T[0], data_raw.T[1])
-    #plt.show()
-    normalized = fl.normalize_data(data_raw)
+    for name in names:
+        distance_array = np.load('data\\' + subject + "\\" + name + '.npy')
+        data = fl.read_file(desktop_activity_location)
+        data_raw = fl.normalize_data(np.asarray(data[name])[0:10000])
+        df = DataFilter(data_raw, distance_array)
 
-    df = DataFilter(normalized[0:5000], distance_array)
-    filtered = np.asarray(df.median_filter(90))
+        filtered = np.asarray(df.median_filter_with_distance_array(180))
+        #normalized = fl.normalize_data(filtered)
 
-    fixations = np.asarray(df.get_fixations(filtered, 4, 0.005, 0.001))
-    plt.plot(fixations.T[0], fixations.T[1], linewidth=0.6, color='black', marker='o',
-             markerfacecolor='red', markeredgecolor='black', markeredgewidth=1.5, markersize=4.5)
-    plt.show()
-    #fl.position_over_time(data_raw)
-    #fl.position_over_time(filtered)
+        fixations = np.asarray(df.get_fixations(filtered, 4, 0.005, 0.01))
+        df.plot_raw_data_with_fixations(name + ' ' + subject)
+        df.plot_fixations(name + ' ' + subject)
+        fl.position_over_time(data_raw)
+        fl.position_over_time(filtered)
 
 
 

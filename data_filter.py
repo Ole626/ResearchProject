@@ -56,21 +56,21 @@ class DataFilter:
         print("Determined peak indices")
         shortest_distance = 0
         while shortest_distance < radius:
-            fixations = []
+            self.fixations = []
             for i in range(1, len(peak_indices)-1):
-                fixations.append(self.geometric_median(xy_coordinates[peak_indices[i-1]:peak_indices[i]]))
+                self.fixations.append(self.geometric_median(xy_coordinates[peak_indices[i-1]:peak_indices[i]]))
 
             shortest_distance = sys.maxsize
             index = 0
-            for i in range(1, len(fixations)-1):
-                distance = self.euclidean_distance(fixations[i], fixations[i-1])
+            for i in range(1, len(self.fixations)-1):
+                distance = self.euclidean_distance(self.fixations[i], self.fixations[i-1])
                 if distance < shortest_distance:
                     shortest_distance = distance
                     index = i
             if shortest_distance < radius:
                 del peak_indices[index]
 
-        return fixations
+        return self.fixations
 
     def euclidean_distance(self, coordinate1, coordinate2):
         return math.sqrt(math.pow((coordinate1[0] - coordinate2[0]), 2)
@@ -97,7 +97,7 @@ class DataFilter:
             for j in range(0, sliding_window):
                 window.append(i+j-sliding_window)
 
-            output = self.xy_coordinates[self.geometric_median_with_distance_array(window, self.distance_array)]
+            output = self.geometric_median(window)
 
             in_array = False
             for coordinate in output_coordinates:
@@ -126,6 +126,29 @@ class DataFilter:
 
         return median
 
+    def median_filter_with_distance_array(self, sliding_window):
+        output_coordinates = []
+        counter = 0
+        for i in range(sliding_window, len(self.xy_coordinates) - sliding_window):
+            window = []
+            if (i-sliding_window) % int(((len(self.xy_coordinates)-2*sliding_window)/100)) == 0:
+                counter = counter + 1
+                print(counter, "%")
+            for j in range(0, sliding_window):
+                window.append(i+j-sliding_window)
+
+            output = self.xy_coordinates[self.geometric_median_with_distance_array(window, self.distance_array)]
+
+            in_array = False
+            for coordinate in output_coordinates:
+                if coordinate[0] == output[0] and coordinate[1] == output[1]:
+                    in_array = True
+                    break
+            if not in_array:
+                output_coordinates.append(output)
+        print("Median filter done")
+        return output_coordinates
+
     def geometric_median_with_distance_array(self, indices, distance_array):
         shortest_distance = sys.maxsize
         median = []
@@ -146,7 +169,7 @@ class DataFilter:
 
         return median
 
-    def calculate_all_distances(self, name):
+    def calculate_all_distances(self, name, subject):
         result_array = np.ndarray(shape=(len(self.xy_coordinates), len(self.xy_coordinates)), dtype=float)
         counter = 0
         for i in range(0, len(self.xy_coordinates)):
@@ -155,15 +178,26 @@ class DataFilter:
                 print(counter, "%")
             for j in range(i+1, len(self.xy_coordinates)):
                 result_array[i][j] = self.euclidean_distance(self.xy_coordinates[i], self.xy_coordinates[j])
-        np.save('data\\' + name + '.npy', result_array)
+        np.save('data\\' + subject + "\\" + name + '.npy', result_array)
         return result_array
 
-    def plot_fixations(self):
+    def plot_fixations(self, name):
+        fixations = np.asarray(self.fixations)
+        plt.plot(fixations.T[0], fixations.T[1], linewidth=0.8, color='black', marker='o',
+                 markerfacecolor='red', markeredgecolor='black', markeredgewidth=1.5, markersize=4.5)
+        plt.title(name)
+        plt.xlabel('x')
+        plt.ylabel('y')
+        plt.show()
+
+    def plot_raw_data_with_fixations(self, name):
         rawdata = np.asarray(self.xy_coordinates)
         fixations = np.asarray(self.fixations)
-        plt.plot(rawdata.T[0], rawdata.T[1], c="blue")
-        plt.scatter(fixations.T[0], fixations.T[1], c="red")
-        plt.plot(fixations.T[0], fixations.T[1], c="red")
-        plt.title("Test")
+        plt.plot(rawdata.T[0], rawdata.T[1], color='blue', alpha=0.5)
+        plt.scatter(fixations.T[0], fixations.T[1], color='red', edgecolor='black', linewidths=1.5)
+        plt.title(name)
+        plt.xlabel('x')
+        plt.ylabel('y')
         plt.show()
+
 
