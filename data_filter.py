@@ -13,12 +13,13 @@ class DataFilter:
         self.distance_array = distance_array
         self.threshold = 0.001
         self.outlier_dist = 0.4
+        self.fixation_lengths = None
 
     def get_fixations(self, xy_coordinates, sliding_window, threshold, radius):
         difference_vector = np.zeros(len(xy_coordinates))
 
-        # Get the difference vector for the mean of consecutive sliding windows
-        for i in range(sliding_window, len(xy_coordinates)-sliding_window-1):
+        # Get the difference vector for the mean of consecutive sliding windows.
+        for i in range(sliding_window, len(xy_coordinates)-sliding_window):
             m_before = [0, 0]
             m_after = [0, 0]
 
@@ -33,13 +34,13 @@ class DataFilter:
 
         peaks = np.zeros(len(xy_coordinates))
         print("Difference vector done")
-        # Get the peaks between averages and store them in a separate list
-        for i in range(1, len(xy_coordinates)-2):
+        # Get the peaks between averages and store them in a separate list.
+        for i in range(1, len(xy_coordinates)-1):
             if difference_vector[i] > difference_vector[i-1] and difference_vector[i] > difference_vector[i+1]:
                 peaks[i] = difference_vector[i]
 
-        # Remove peaks that are too close to each other
-        for i in range(sliding_window, len(xy_coordinates)-sliding_window-1):
+        # Remove peaks that lie within the same sliding windows.
+        for i in range(sliding_window, len(xy_coordinates)-sliding_window):
             if peaks[i] != 0:
                 for j in range(i-sliding_window, i-1):
                     if peaks[j] <= peaks[i]:
@@ -54,15 +55,21 @@ class DataFilter:
             if peaks[i] >= threshold:
                 peak_indices.append(i)
         print("Determined peak indices")
+
+        # Determine positions of fixations by geometric median. Remove fixations that are too close to each other.
         shortest_distance = 0
         while shortest_distance < radius:
             self.fixations = []
+            self.fixation_lengths = np.zeros(len(peak_indices)-2)
             for i in range(1, len(peak_indices)-1):
-                self.fixations.append(self.geometric_median(xy_coordinates[peak_indices[i-1]:peak_indices[i]]))
-
+                fixation = self.geometric_median(xy_coordinates[peak_indices[i-1]:peak_indices[i]])
+                self.fixations.append(fixation)
+                for point in xy_coordinates[peak_indices[i-1]:peak_indices[i]]:
+                    if self.euclidean_distance(point, fixation) <= 0.005:
+                        self.fixation_lengths[i-1] = self.fixation_lengths[i-1] + 1/(peak_indices[i]-peak_indices[i-1])
             shortest_distance = sys.maxsize
             index = 0
-            for i in range(1, len(self.fixations)-1):
+            for i in range(1, len(self.fixations)):
                 distance = self.euclidean_distance(self.fixations[i], self.fixations[i-1])
                 if distance < shortest_distance:
                     shortest_distance = distance
@@ -98,7 +105,7 @@ class DataFilter:
                 window.append(i+j-sliding_window)
 
             output_coordinates.append(self.geometric_median(window))
-            
+
         print("Median filter done")
         return output_coordinates
 
@@ -114,7 +121,7 @@ class DataFilter:
                 window.append(i+j-sliding_window)
 
             output_coordinates.append(
-                self.xy_coordinates[self.geometric_median_with_distance_array(window, self.distance_array)])
+                self.xy_coordinates[self.geometric_median_with_distance_array(window)])
 
         print("Median filter done")
         return output_coordinates
@@ -136,7 +143,7 @@ class DataFilter:
 
         return median
 
-    def geometric_median_with_distance_array(self, indices, distance_array):
+    def geometric_median_with_distance_array(self, indices):
         shortest_distance = sys.maxsize
         median = []
 
@@ -146,9 +153,9 @@ class DataFilter:
                 if distance_sum > shortest_distance:
                     break
                 if point < comparison_point:
-                    distance_sum = distance_sum + distance_array[point][comparison_point]
+                    distance_sum = distance_sum + self.distance_array[point][comparison_point]
                 else:
-                    distance_sum = distance_sum + distance_array[comparison_point][point]
+                    distance_sum = distance_sum + self.distance_array[comparison_point][point]
 
             if distance_sum < shortest_distance:
                 shortest_distance = distance_sum
