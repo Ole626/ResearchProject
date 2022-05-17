@@ -55,10 +55,10 @@ class FileLoader:
 
     def position_over_time(self, xy_coordinates):
         transposed_array = np.asarray(xy_coordinates).T
-        time = np.arange(len(xy_coordinates)) * 20
+        time = np.arange(len(xy_coordinates)) / 300
         plt.plot(time, transposed_array[0], color='red', label='x')
         plt.plot(time, transposed_array[1], color='blue', label='y')
         plt.legend(loc='upper right')
-        plt.xlabel('Time (ms)')
+        plt.xlabel('Time (s)')
         plt.ylabel('Position')
         plt.show()

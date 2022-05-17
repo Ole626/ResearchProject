@@ -29,7 +29,7 @@ class DataFilter:
                 m_after[1] = m_after[1] + xy_coordinates[i+j][1]/sliding_window
 
             difference_vector[i] = np.sqrt(math.pow((m_after[0] - m_before[0]), 2) +
-                                            math.pow((m_after[1] - m_before[1]), 2))
+                                           math.pow((m_after[1] - m_before[1]), 2))
 
         peaks = np.zeros(len(xy_coordinates))
         print("Difference vector done")
@@ -97,15 +97,25 @@ class DataFilter:
             for j in range(0, sliding_window):
                 window.append(i+j-sliding_window)
 
-            output = self.geometric_median(window)
+            output_coordinates.append(self.geometric_median(window))
+            
+        print("Median filter done")
+        return output_coordinates
 
-            in_array = False
-            for coordinate in output_coordinates:
-                if coordinate[0] == output[0] and coordinate[1] == output[1]:
-                    in_array = True
-                    break
-            if not in_array:
-                output_coordinates.append(output)
+    def median_filter_with_distance_array(self, sliding_window):
+        output_coordinates = []
+        counter = 0
+        for i in range(sliding_window, len(self.xy_coordinates) - sliding_window):
+            window = []
+            if (i-sliding_window) % int(((len(self.xy_coordinates)-2*sliding_window)/100)) == 0:
+                counter = counter + 1
+                print(counter, "%")
+            for j in range(0, sliding_window):
+                window.append(i+j-sliding_window)
+
+            output_coordinates.append(
+                self.xy_coordinates[self.geometric_median_with_distance_array(window, self.distance_array)])
+
         print("Median filter done")
         return output_coordinates
 
@@ -125,29 +135,6 @@ class DataFilter:
                 median = point
 
         return median
-
-    def median_filter_with_distance_array(self, sliding_window):
-        output_coordinates = []
-        counter = 0
-        for i in range(sliding_window, len(self.xy_coordinates) - sliding_window):
-            window = []
-            if (i-sliding_window) % int(((len(self.xy_coordinates)-2*sliding_window)/100)) == 0:
-                counter = counter + 1
-                print(counter, "%")
-            for j in range(0, sliding_window):
-                window.append(i+j-sliding_window)
-
-            output = self.xy_coordinates[self.geometric_median_with_distance_array(window, self.distance_array)]
-
-            in_array = False
-            for coordinate in output_coordinates:
-                if coordinate[0] == output[0] and coordinate[1] == output[1]:
-                    in_array = True
-                    break
-            if not in_array:
-                output_coordinates.append(output)
-        print("Median filter done")
-        return output_coordinates
 
     def geometric_median_with_distance_array(self, indices, distance_array):
         shortest_distance = sys.maxsize
