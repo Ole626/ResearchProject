@@ -4,15 +4,18 @@ import numpy as np
 import matplotlib.pyplot as plt
 
 
+# The FileLoader class reads the data and normalizes the data. It can also plot the data.
 class FileLoader:
     def __init__(self):
         self.x_coordinates = None
         self.y_coordinates = None
 
+    # This function loads .mat files into an array.
     def read_file(self, file_location):
         data = sp.loadmat(file_location)
         return data
 
+    # This function returns the max and min of both the x and y coordinates.
     def get_min_max(self, xy_coordinates):
         min_x = sys.maxsize
         max_x = -sys.maxsize
@@ -31,6 +34,7 @@ class FileLoader:
 
         return (min_x, max_x), (min_y, max_y)
 
+    # This function normalizes the data given into a range between 0 and 1.
     def normalize_data(self, xy_coordinates):
         minmax = self.get_min_max(xy_coordinates)
         minmax_x = minmax[0]
@@ -44,6 +48,7 @@ class FileLoader:
 
         return normalized_coordinates
 
+    # This function plots all the individual points in a scatter plot.
     def scatter_plot(self, xy_coordinates, name):
         transposed_array = np.asarray(xy_coordinates).T
         plt.plot(transposed_array[0], transposed_array[1], linewidth=0.3, color='black', marker='o',
@@ -53,6 +58,7 @@ class FileLoader:
         plt.ylabel('y')
         plt.show()
 
+    # This function show the flow of the x and y coordinates of data over time.
     def position_over_time(self, xy_coordinates):
         transposed_array = np.asarray(xy_coordinates).T
         time = np.arange(len(xy_coordinates)) / 300

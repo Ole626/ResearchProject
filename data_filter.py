@@ -5,6 +5,7 @@ import matplotlib.pyplot as plt
 import numpy as np
 
 
+# The DataFilter class can preprocess raw data by applying a median filter, extract fixations and plot the results.
 class DataFilter:
     def __init__(self, raw_data, distance_array):
         self.fixations = None

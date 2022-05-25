@@ -5,6 +5,8 @@ import math
 POINT_DURATION = 100/3  # In ms
 
 
+# The FeatureExtractor class takes preprocessed that and extracts features from the fixations and saccades.
+# It is able to plot these as well.
 class FeatureExtractor:
     def __init__(self, filtered_data, peak_indices):
         self.filtered_data = filtered_data
@@ -12,6 +14,7 @@ class FeatureExtractor:
         self.fixation_durations = None
         self.saccade_lengths = None
 
+    # This function calculates the duration of every fixation.
     def fixation_duration(self, peak_indices):
         durations = []
         for i in range(1, len(peak_indices)):
@@ -20,6 +23,7 @@ class FeatureExtractor:
         self.fixation_durations = durations
         return self.fixation_durations
 
+    # This function calculates the average, variation and standard deviation of the fixation duration.
     def fixation_duration_avg_var_sd(self, peak_indices):
         durations = self.fixation_duration(peak_indices)
         average = np.average(durations)
@@ -28,6 +32,7 @@ class FeatureExtractor:
 
         return average, variance, std
 
+    # This function calculates the saccade length.
     def saccade_length(self, fixations):
         lengths = []
         for i in range(1, len(fixations)):
@@ -36,6 +41,7 @@ class FeatureExtractor:
         self.saccade_lengths = lengths
         return self.saccade_lengths
 
+    # This function calculates the average, variation and standard deviation of the saccade length.
     def saccade_length_avg_var_sd(self, fixations):
         lengths = self.saccade_length(fixations)
         average = np.average(lengths)
@@ -44,7 +50,7 @@ class FeatureExtractor:
 
         return average, variance, std
 
-
+    # This function plots a given list of features in a bar plot.
     def plot_features(self, features, name, x_label, y_label):
         fig = plt.figure(figsize=(10, 5))
 
