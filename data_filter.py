@@ -1,6 +1,5 @@
 import math
 import sys
-
 import matplotlib.pyplot as plt
 import numpy as np
 
@@ -168,11 +167,12 @@ class DataFilter:
         result_array = np.ndarray(shape=(len(self.raw_data), len(self.raw_data)), dtype=float)
         counter = 0
         for i in range(0, len(self.raw_data)):
+            for j in range(i+1, len(self.raw_data)):
+                result_array[i][j] = self.euclidean_distance(self.raw_data[i], self.raw_data[j])
+
             if (i-1) % (len(self.raw_data) / 100) == 0:
                 counter = counter + 1
                 print(counter, "%")
-            for j in range(i+1, len(self.raw_data)):
-                result_array[i][j] = self.euclidean_distance(self.raw_data[i], self.raw_data[j])
         np.save('data\\' + subject + "\\" + name + '.npy', result_array)
         return result_array
 

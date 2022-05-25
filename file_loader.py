@@ -51,20 +51,31 @@ class FileLoader:
     # This function plots all the individual points in a scatter plot.
     def scatter_plot(self, xy_coordinates, name):
         transposed_array = np.asarray(xy_coordinates).T
-        plt.plot(transposed_array[0], transposed_array[1], linewidth=0.3, color='black', marker='o',
-                 markerfacecolor='red', markeredgecolor='black', markeredgewidth=1.2, markersize=4.0)
-        plt.title(name)
-        plt.xlabel('x')
-        plt.ylabel('y')
+        fig = plt.figure(figsize=(5, 4))
+        ax = fig.add_subplot()
+
+        ax.plot(transposed_array[0], transposed_array[1], linewidth=0.3, color='black', marker='o',
+                markerfacecolor='red', markeredgecolor='black', markeredgewidth=1.2, markersize=4.0)
+        ax.set_title(name)
+        ax.set_xlabel('x')
+        ax.set_ylabel('y')
+
+        plt.tight_layout()
         plt.show()
 
     # This function show the flow of the x and y coordinates of data over time.
     def position_over_time(self, xy_coordinates):
         transposed_array = np.asarray(xy_coordinates).T
         time = np.arange(len(xy_coordinates)) / 300
-        plt.plot(time, transposed_array[0], color='red', label='x')
-        plt.plot(time, transposed_array[1], color='blue', label='y')
-        plt.legend(loc='upper right')
-        plt.xlabel('Time (s)')
-        plt.ylabel('Position')
+
+        fig = plt.figure(figsize=(8, 5))
+        ax = fig.add_subplot()
+
+        ax.plot(time, transposed_array[0], color='red', label='x')
+        ax.plot(time, transposed_array[1], color='blue', label='y')
+        ax.legend(loc='upper right')
+        ax.set_xlabel('Time (s)')
+        ax.set_ylabel('Position')
+
+        plt.tight_layout()
         plt.show()
