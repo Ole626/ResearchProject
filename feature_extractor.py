@@ -13,6 +13,7 @@ class FeatureExtractor:
         self.peak_indices = peak_indices
         self.fixation_durations = None
         self.saccade_lengths = None
+        self.saccade_directions = None
 
     # This function calculates the duration of every fixation.
     def fixation_duration(self, peak_indices):
@@ -49,6 +50,39 @@ class FeatureExtractor:
         std = np.std(lengths)
 
         return average, variance, std
+
+    def saccade_direction(self, fixations):
+        deltaX = 0
+        deltaY = 0
+
+        result_directions = []
+
+        for i in range(1, len(fixations)):
+            deltaX = fixations[i][0] - fixations[i-1][0]
+            deltaY = fixations[i][1] - fixations[i-1][1]
+            length = np.sqrt(math.pow(deltaX, 2) + math.pow(deltaY, 2))
+            normalized_deltaX = deltaX / length
+            normalized_deltaY = deltaY / length
+
+            if 0 <= normalized_deltaX < 0.5 and normalized_deltaY >= 0:
+                result_directions.append(1)
+            elif normalized_deltaX >= 0.5 and normalized_deltaY >= 0:
+                result_directions.append(2)
+            elif normalized_deltaX >= 0.5 and normalized_deltaY < 0:
+                result_directions.append(3)
+            elif 0 <= normalized_deltaX < 0.5 and normalized_deltaY < 0:
+                result_directions.append(4)
+            elif -0.5 <= normalized_deltaX < 0 and normalized_deltaY < 0:
+                result_directions.append(5)
+            elif normalized_deltaX < -0.5 and normalized_deltaY < 0:
+                result_directions.append(6)
+            elif normalized_deltaX < -0.5 and normalized_deltaY >= 0:
+                result_directions.append(7)
+            elif -0.5 <= normalized_deltaX < 0 and normalized_deltaY >= 0:
+                result_directions.append(8)
+
+        self.saccade_directions = result_directions
+        return self.saccade_directions
 
     # This function plots a given list of features in a bar plot.
     def plot_features(self, features, name, x_label, y_label):
