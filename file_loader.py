@@ -12,7 +12,7 @@ class FileLoader:
 
     # This function loads .mat files into an array.
     def read_file(self, file_location):
-        data = sp.loadmat(file_location)
+        data = np.genfromtxt(file_location, delimiter=',')
         return data
 
     # This function returns the max and min of both the x and y coordinates.

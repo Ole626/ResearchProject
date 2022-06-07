@@ -15,6 +15,10 @@ class FeatureExtractor:
         self.saccade_lengths = None
         self.saccade_directions = None
 
+    # This function calculates the fixation rate
+    def fixation_rate(self, fixations):
+        return len(fixations) / len(self.filtered_data)
+
     # This function calculates the duration of every fixation.
     def fixation_duration(self, peak_indices):
         durations = []

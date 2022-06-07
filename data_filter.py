@@ -94,9 +94,9 @@ class DataFilter:
             for j in range(0, sliding_window):
                 window.append(i+j-sliding_window)
 
-            if (i-sliding_window) % int(((len(xy_coordinates) - (2 * sliding_window)) / 100)) == 0:
-                counter = counter + 1
-                print(counter, "%")
+            # if (i-sliding_window) % int(((len(xy_coordinates) - (2 * sliding_window)) / 100)) == 0:
+            #     counter = counter + 1
+            #     print(counter, "%")
 
             output_coordinates.append(self.geometric_median(window))
 
@@ -110,9 +110,9 @@ class DataFilter:
         counter = 0
         for i in range(sliding_window, len(xy_coordinates) - sliding_window):
             window = []
-            if (i-sliding_window) % int(((len(xy_coordinates) - 2 * sliding_window) / 100)) == 0:
-                counter = counter + 1
-                print(counter, "%")
+            # if (i-sliding_window) % int(((len(xy_coordinates) - 2 * sliding_window) / 100)) == 0:
+            #     counter = counter + 1
+            #     print(counter, "%")
             for j in range(0, sliding_window):
                 window.append(i+j-sliding_window)
 
@@ -170,9 +170,9 @@ class DataFilter:
             for j in range(i+1, len(self.raw_data)):
                 result_array[i][j] = self.euclidean_distance(self.raw_data[i], self.raw_data[j])
 
-            if (i-1) % (len(self.raw_data) / 100) == 0:
-                counter = counter + 1
-                print(counter, "%")
+            # if (i-1) % (len(self.raw_data) / 100) == 0:
+            #     counter = counter + 1
+            #     print(counter, "%")
         np.save('data\\' + subject + "\\" + name + '.npy', result_array)
         return result_array
 
