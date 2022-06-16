@@ -63,7 +63,7 @@ class FileLoader:
         plt.show()
 
     # This function show the flow of the x and y coordinates of data over time.
-    def position_over_time(self, xy_coordinates):
+    def position_over_time(self, xy_coordinates, name):
         transposed_array = np.asarray(xy_coordinates).T
         time = np.arange(len(xy_coordinates)) / 300
 
@@ -72,9 +72,11 @@ class FileLoader:
 
         ax.plot(time, transposed_array[0], color='red', label='x')
         ax.plot(time, transposed_array[1], color='blue', label='y')
+        ax.set_title(name)
         ax.legend(loc='upper right')
         ax.set_xlabel('Time (s)')
         ax.set_ylabel('Position')
 
         plt.tight_layout()
         plt.show()
+        fig.savefig(".\\plots\\" + name + ".png")

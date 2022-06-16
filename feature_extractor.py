@@ -119,8 +119,9 @@ class FeatureExtractor:
 
         zipped = list(zip(distances, fixations))
         zipped.sort(key=lambda tup: tup[0], reverse=True)
+        sorted_points = [list(point[1]) for point in zipped[0:int(0.75 * len(fixations))]]
 
-        return zipped[0][0]
+        return sorted_points[0][0]
 
     # This function returns the slope of the best fit line through the fixations
     def fixation_slope(self, fixations):
@@ -137,13 +138,13 @@ class FeatureExtractor:
             feature_list = []
             sliced_peaks = [j for j in range(0, len(self.peak_indices)) if i <= self.peak_indices[j] <= i+window_size]
             sliced_fixations = self.fixations[sliced_peaks[0]:sliced_peaks[-1]]
-
             for feature in features:
                 match feature:
                     case Features.FIX_RATE:
                         feature_list += [self.fixation_rate(sliced_fixations)]
                     case Features.FIX_DUR:
-                        feature_list += [ft for ft in self.fixation_duration_avg_var_sd(sliced_peaks)]
+                        feature_list += [ft for ft in self.fixation_duration_avg_var_sd(
+                            self.peak_indices[sliced_peaks[0]: sliced_peaks[-1]])]
                     case Features.SAC_LEN:
                         feature_list += [ft for ft in self.saccade_length_avg_var_sd(sliced_fixations)]
                     case Features.SAC_DIR:

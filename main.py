@@ -1,38 +1,40 @@
-import sklearn.metrics
-
 from file_loader import FileLoader
 from data_filter import DataFilter
 from feature_extractor import FeatureExtractor
 from classifier import Classifier
 import numpy as np
 from feature_selector import Features
-from sklearn.model_selection import train_test_split, GridSearchCV
+from sklearn.model_selection import GridSearchCV
 from sklearn.neighbors import KNeighborsClassifier
-from sklearn.ensemble import RandomForestClassifier, ExtraTreesClassifier
-from sklearn import svm
-from sklearn.metrics import accuracy_score
+from sklearn.ensemble import RandomForestClassifier
+from sklearn import svm, preprocessing
+from sklearn.inspection import PartialDependenceDisplay
+from sklearn.metrics import accuracy_score, confusion_matrix, f1_score
+import matplotlib.pyplot as plt
 
 
 SUBJECT = 'P5'
-SUBJECTS = ['P1', 'P2', 'P3', 'P4', 'P5', 'P6', 'P7', 'P8']
+SUBJECTS = ['P1']
 NAME = '_READ'
-NAMES = ['_READ', '_WRITE', '_WATCH', '_PLAY', '_BROWSE']
+NAMES = ['_WATCH']
 LOCATION = ".\\data\\DesktopActivity\\" + SUBJECT + "\\" + SUBJECT + NAME + ".csv"
 DISTANCE_ARRAY = np.load('data\\' + SUBJECT + "\\" + NAME + '.npy')
-FEATURES = [e for e in Features]
+FEATURES = [e for e in Features if e.value[0] not in []]
 print('Features: ', FEATURES)
 
 
 if __name__ == '__main__':
-    data_X_train = []
-    data_Y_train = []
-    data_X_test = []
-    data_Y_test = []
+    data_X = []
+    data_Y = []
+    data_X_per_subject = []
+    data_Y_per_subject = []
 
     for subject in SUBJECTS:
         print(subject)
+        data_X_act = []
+        data_Y_act = []
 
-        for name in NAMES:
+        for i, name in enumerate(NAMES):
             print(name)
 
             dist = np.load('data\\' + subject + "\\" + name + '.npy')
@@ -44,7 +46,9 @@ if __name__ == '__main__':
 
             df = DataFilter(data_raw, dist)
             filtered = np.asarray(df.median_filter_with_distance_array(df.raw_data, 6))
-            fixations = np.asarray(df.get_fixations(filtered, 8, 0.003, 0.001))
+            df.plot_fixations(data_raw, "Raw Data Watching Subject 1")
+            df.plot_fixations(filtered, "Filtered Data Watching Subject 1")
+            fixations = np.asarray(df.get_fixations(filtered, 7, 0.003, 0.001))
 
             fe = FeatureExtractor(filtered, df.peak_indices, fixations)
 
@@ -52,35 +56,51 @@ if __name__ == '__main__':
 
             if not fts[0]:
                 raise Exception("Features are empty, check features")
+            data_X_act.append(fts)
+            data_Y_act.append(labels)
+            data_X += fts
+            data_Y += labels
 
-            train_X, test_X, train_y, test_y = train_test_split(fts, labels, test_size=0.2, random_state=0)
-            data_X_train += train_X
-            data_Y_train += train_y
-            data_X_test += test_X
-            data_Y_test += test_y
+        data_X_per_subject.append(data_X_act)
+        data_Y_per_subject.append(data_Y_act)
 
-    svm = svm.SVC()
-    knn = KNeighborsClassifier(n_neighbors=5)
-    rf = RandomForestClassifier(max_depth=4, random_state=0)
-    et = ExtraTreesClassifier(n_estimators=100, random_state=0)
+    scaler = preprocessing.StandardScaler().fit(data_X)
+    scaled_subject_X = []
+    for temp_sub in data_X_per_subject:
+        scaled_act_X = []
+        for temp_act in temp_sub:
+            scaled_act_X.append(list(scaler.transform(temp_act)))
+        scaled_subject_X.append(scaled_act_X)
+    data_X = scaler.transform(data_X)
+
+    svm = svm.SVC(C=1000, kernel='rbf')
+    knn = KNeighborsClassifier(n_neighbors=20)
+    rf = RandomForestClassifier()
 
     clf = Classifier(svm, knn, rf)
 
-    print(clf.svm.get_params())
-    print(clf.knn.get_params())
-    print(clf.rf.get_params())
-    print(et.get_params())
+    clss = [(rf, 'Random Forest:'), (svm, 'SVM:')]
 
-    grid = {'C': [1, 10, 100, 1000], 'kernel': ['linear', 'poly', 'rbf', 'sigmoid'],
-            'gamma': ['scale', 'auto']}
-    scoring = ['accuracy', 'f1_macro']
+    for cls, name in clss:
+        results, estimators = clf.cross_validate_over_activities(cls, scaled_subject_X, data_Y_per_subject)
+        # results, estimators = clf.cross_validate_over_subjects(cls, data_X, data_Y)
+        print(name, results)
 
-    result = GridSearchCV(clf.svm, grid, scoring=scoring, refit='accuracy', cv=5)
-    result.fit(data_X_train, data_Y_train)
-    print(result.get_params(deep=False))
-    print(accuracy_score(result.predict(data_X_test), data_Y_test))
+        # feats = []
+        # for est in estimators:
+        #     feats.append(est.feature_importances_)
 
-    # print("KNN: ", clf.cross_validate(clf.knn, data_X_train + data_X_test, data_Y_train + data_Y_test))
-    # print("SVM: ", clf.cross_validate(clf.svm, data_X_train + data_X_test, data_Y_train + data_Y_test))
-    # print("Random Forest: ", clf.cross_validate(clf.rf, data_X_train + data_X_test, data_Y_train + data_Y_test))
-    # print("Extra Trees: ", clf.cross_validate(et, data_X_train + data_X_test, data_Y_train + data_Y_test))
+    features = ["Fixation Rate", "Fixation Duration Avg", "Fixation Duration Var", "Fixation Duration Std",
+                "Saccade Length Avg", "Saccade Length Var", "Saccade Length Std", "Saccade Direction NNE",
+                "Saccade Direction ENE", "Saccade Direction ESE", "Saccade Direction SSE", "Saccade Direction SSW",
+                "Saccade Direction WSW", "Saccade Direction WNW", "Saccade Direction NNW", "Fixation Dispersion Area",
+                "Fixation Slope", "Fixation Radius"]
+
+    # fig = plt.figure(figsize=(10, 7))
+    # ax = fig.add_subplot()
+    # zipped = sorted(list(zip(abs(np.average(np.asarray(feats), axis=0)), features)), reverse=True)
+    # ax.bar([tup[1] for tup in zipped], [tup[0] for tup in zipped])
+    # plt.xticks(rotation='vertical')
+    # plt.tight_layout()
+    # plt.show()
+    # fig.savefig(".\\plots\\coefficients_svm.png")

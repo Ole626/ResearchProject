@@ -193,6 +193,7 @@ class DataFilter:
 
         plt.tight_layout()
         plt.show()
+        fig.savefig(".\\plots\\" + name + ".png")
 
     # This function plots the raw data with the fixations on top.
     def plot_raw_data_with_fixations(self, raw_data, fixations, name):
